@@ -1,0 +1,2 @@
+# UsedGoodsShop
+smart contract - UsedGoodsShop
