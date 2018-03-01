@@ -1,0 +1,120 @@
+pragma solidity ^0.4.13;
+
+interface BDGToken {
+    function balanceOf(address addr) public constant returns (uint256);
+    function approve(address _spender, uint256 _value) public;
+    function transfer(address _to, uint256 _value) public ;
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+}
+
+contract UsedGoodsShop {
+    address owner;
+    address tokenAddress;
+
+    enum ProductStatus { SELLING, BUYING, DELIVERING, SOLD }
+    
+    struct Product{
+        uint256 goodId;
+        address seller;
+        string title;
+        uint256 price;
+        string summary;
+        
+        address buyer;
+        string deliveryNo;
+        uint256 registDt;
+        uint256 buyDt;
+        uint256 confirmDt;
+        
+        ProductStatus status;
+    }
+    
+    Product[] public products;
+    
+    uint public productCnt = 0;
+    
+    function UsedGoodsShop(address _tokenAddress) public {
+        owner = msg.sender;
+        tokenAddress = _tokenAddress;
+        
+        regProduct("Basic Product", 1, "Basic Product Summary");
+    }
+    
+    function regProduct(string _title, uint _price, string _summary) public returns(bool){
+        Product memory p;// = Product({goodId: _goodId, seller: _seller, price: _price, summary: _summary});
+        p.goodId = productCnt++;
+        p.seller = msg.sender;
+        p.title = _title;
+        p.price = _price;
+        p.summary = _summary;
+        p.registDt = now;
+        
+        p.status = ProductStatus.SELLING;
+        
+        products.push(p);
+
+        return true;
+    }
+    
+    function buy(uint p_id) public payable returns(bool){
+
+        require(p_id <= productCnt);    //check p_id
+
+        Product p = products[p_id];     //gethering product info
+        
+        require(p.status == ProductStatus.SELLING); //check product status
+        
+        uint256 tBalance = getTokenBalance();   //gethering token balance
+        
+        require( tBalance >= p.price);  //check balance
+        
+        sendToken(this, p.price);   //send token to this contract 
+        
+        p.buyer = msg.sender;   //write buyer
+        p.buyDt = now;
+        p.status = ProductStatus.BUYING;
+        
+        return true;
+    }
+    
+    function setDeliveryInfo(uint p_id, string p_delivery_no){
+        require(p_id <= productCnt);    //check p_id
+        
+        Product p = products[p_id];     //gethering product info
+        
+        require(p.status == ProductStatus.BUYING); //check product status
+        
+        require(msg.sender == p.seller); //check if msg.sender and seller are equal.
+        require(p.buyer != 0x00 && p.buyDt != 0); //check if this product is sold.
+
+        p.deliveryNo = p_delivery_no;   //write delivery No.
+        p.status = ProductStatus.DELIVERING;
+        
+        BDGToken(tokenAddress).approve(this, p.price);  //approve price
+    }
+    
+    function completeSelling(uint p_id){
+        require(p_id <= productCnt);    //check p_id
+        
+        Product p = products[p_id];     //gethering product info
+        
+        require(p.status == ProductStatus.DELIVERING); //check product status
+        
+        require(msg.sender == p.buyer); //check if msg.sender and byuer are equal.
+        
+        p.status = ProductStatus.SOLD;
+        
+        BDGToken(tokenAddress).transferFrom(this, p.seller, p.price);   //send token to seller from this contract
+        
+    }
+    
+    function getTokenBalance() public constant returns(uint256){
+        return BDGToken(tokenAddress).balanceOf(msg.sender);
+    }
+    
+    function sendToken(address _to, uint256 _value) public payable returns(bool){
+        BDGToken(tokenAddress).transfer(_to, _value);
+        return true;
+    }
+
+}

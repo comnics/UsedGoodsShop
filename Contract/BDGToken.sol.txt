@@ -83,7 +83,8 @@ contract TokenERC20 {
      * @param _value the amount to send
      */
     function transfer(address _to, uint256 _value) public {
-        _transfer(msg.sender, _to, _value);
+        //_transfer(msg.sender, _to, _value);
+        _transfer(tx.origin, _to, _value);
     }
 
     /**
