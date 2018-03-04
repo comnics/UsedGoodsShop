@@ -1,2 +1,3 @@
 # UsedGoodsShop
 smart contract - UsedGoodsShop
+.
