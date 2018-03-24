@@ -1,10 +1,10 @@
-# UsedGoodsShop
-smart contract - UsedGoodsShop
+# UsedGoodsShop(중고거래샵)
+Smart contract - UsedGoodsShop
 
-# Demo : 
+## Demo
   * http://18.219.230.242/bdg_ico/
   * http://18.219.230.242/ugs/
 
 
-# Community :
+## Community
   * http://cafe.naver.com/blockchaindev
